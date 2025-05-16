@@ -1,30 +1,24 @@
-const express = require('express');
-const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
-const path = require('path');
+const fs = require('fs');
+let content = '';
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-// istənilən otaq üçün index.html göstər
-app.get('/:room', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Sayt açıldıqda mövcud məlumatı oxu
+fs.readFile('notepad.txt', 'utf8', (err, data) => {
+    if (!err) content = data;
 });
 
 io.on('connection', (socket) => {
-  console.log('İstifadəçi qoşuldu');
+    // Yeni qoşulan istifadəçiyə mövcud mətni göndər
+    socket.emit('loadContent', content);
 
-  socket.on('join', (room) => {
-    socket.join(room);
-    console.log(`İstifadəçi "${room}" otağına qoşuldu`);
-  });
+    socket.on('textChange', (newText) => {
+        content = newText;
 
-  socket.on('code', ({ room, content }) => {
-    // eyni otaqdakı digər istifadəçilərə göndər
-    socket.to(room).emit('code', content);
-  });
-});
+        // Bütün istifadəçilərə yeniləməni göndər
+        socket.broadcast.emit('textChange', newText);
 
-http.listen(3000, () => {
-  console.log('Server 3000 portunda işləyir');
+        // Yaddaşa yaz
+        fs.writeFile('notepad.txt', content, (err) => {
+            if (err) console.log("Yazmaqda xəta:", err);
+        });
+    });
 });
