@@ -39,3 +39,11 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`${PORT} portunda server işləyir`);
 });
+// Static fayllar üçün
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Dinamik route-lar üçün index.html qaytar
+app.get('/:room', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
