@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <title>CodeAcademy</title>
+</head>
+<body>
+  <h1>2002-in CodeAcademy-si</h1>
+  <textarea id="editor" style="width: 100%; height: 772px;"></textarea>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // URL-dən otaq adını al (məsələn: /yusif → "yusif")
+    const room = window.location.pathname.substring(1);
+
+    // serverə bildirdik ki bu otağa qoşuluruq
+    socket.emit('join', room);
+
+    const editor = document.getElementById('editor');
+
+    editor.addEventListener('input', () => {
+      socket.emit('code', { room: room, content: editor.value });
+    });
+
+    socket.on('code', (data) => {
+      editor.value = data;
+    });
+  </script>
+</body>
+</html>
