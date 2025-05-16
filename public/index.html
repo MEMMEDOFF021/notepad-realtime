@@ -12,10 +12,7 @@
   <script>
     const socket = io();
 
-    // URL-dən otaq adını al (məsələn: /yusif → "yusif")
     const room = window.location.pathname.substring(1);
-
-    // serverə bildirdik ki bu otağa qoşuluruq
     socket.emit('join', room);
 
     const editor = document.getElementById('editor');
