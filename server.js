@@ -1,59 +1,72 @@
-const express = require('express');
-const http = require('http');
-const path = require('path');
-const { Server } = require('socket.io');
-const Redis = require('ioredis');  // Redis client
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
-
-// Render Key-Value instance URL-ni ENV-dən oxu (Render-də konfiqurasiya et)
-// Məsələn: REDIS_URL=rediss://:password@host:port
-const redis = new Redis(process.env.REDIS_URL);
-
-// Statik fayllar üçün public qovluğunu göstər
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Dinamik route-lar üçün index.html qaytar (room adı URL-dədirsə)
-app.get('/:room', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-io.on('connection', (socket) => {
-  console.log('Yeni istifadəçi qoşuldu');
-
-  // İstifadəçi otağa qoşulur
-  socket.on('join', async (room) => {
-    socket.join(room);
-    console.log(`İstifadəçi ${room} otağına qoşuldu`);
-
-    // Redis-dən həmin otağın yazısını oxu
-    const savedContent = await redis.get(room);
-    // Yeni qoşulan istifadəçiyə saxlanılan mətni göndər
-    if (savedContent) {
-      socket.emit('code', savedContent);
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <title>Code2002</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2e2e2e, #1a1a1a); /* Qara-boz fon */
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-  });
 
-  // Kimsə otaqda kod yazanda
-  socket.on('code', async (data) => {
-    const { room, content } = data;
+    h1 {
+      margin-top: 20px;
+      font-size: 48px;
+      letter-spacing: 4px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    }
 
-    // Yazını Redis-də yadda saxla
-    await redis.set(room, content);
+    #editor {
+      width: 90%;
+      max-width: 1000px;
+      height: 80%;
+      margin-top: 20px;
+      background-color: #1c1c1c;
+      color: #00ffcc;
+      font-size: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      border: none;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc; /* Açılan anda effekt */
+      resize: none;
+      outline: none;
+      caret-color: #00ffcc; /* Kursorun rəngi */
+    }
+  </style>
+</head>
+<body>
+  <h1>CODE 2002</h1>
+  <textarea id="editor" autofocus></textarea> <!-- avtomatik fokus -->
 
-    // Otaqdakı digər istifadəçilərə göndər (özünə göndərmə)
-    socket.to(room).emit('code', content);
-  });
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
 
-  socket.on('disconnect', () => {
-    console.log('İstifadəçi ayrıldı');
-  });
-});
+    const room = window.location.pathname.substring(1);
+    socket.emit('join', room);
 
-// Portu Render üçün ya da local üçün təyin et
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server ${PORT} portunda işləyir`);
-});
+    const editor = document.getElementById('editor');
+
+    editor.addEventListener('input', () => {
+      socket.emit('code', { room: room, content: editor.value });
+    });
+
+    socket.on('code', (data) => {
+      editor.value = data;
+    });
+
+    // Fokuslanma və imlecin görünməsi
+    window.onload = () => {
+      editor.focus();
+    };
+  </script>
+</body>
+</html>
