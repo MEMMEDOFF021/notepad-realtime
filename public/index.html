@@ -2,11 +2,52 @@
 <html lang="az">
 <head>
   <meta charset="UTF-8">
-  <title>CodeAcademy</title>
+  <title>Code2002</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 48px;
+      letter-spacing: 4px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    }
+
+    #editor {
+      width: 90%;
+      max-width: 1000px;
+      height: 80%;
+      margin-top: 20px;
+      background-color: #1c1c1c;
+      color: #00ffcc;
+      font-size: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      border: none;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      resize: none;
+      outline: none;
+    }
+
+    #editor:focus {
+      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+    }
+  </style>
 </head>
 <body>
-  <h1>2002-in CodeAcademy-si</h1>
-  <textarea id="editor" style="width: 100%; height: 772px;"></textarea>
+  <h1>CODE 2002</h1>
+  <textarea id="editor"></textarea>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
