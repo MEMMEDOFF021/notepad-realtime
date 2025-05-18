@@ -43,6 +43,8 @@
       font-size: 16px;
       text-align: right;
       user-select: none;
+      line-height: 1.5;
+      overflow: hidden;
     }
 
     #editor {
@@ -57,6 +59,7 @@
       outline: none;
       caret-color: #00ffcc;
       line-height: 1.5;
+      overflow: auto;
     }
   </style>
 </head>
@@ -90,6 +93,10 @@
     editor.addEventListener('input', () => {
       socket.emit('code', { room: room, content: editor.value });
       updateLineNumbers();
+    });
+
+    editor.addEventListener('scroll', () => {
+      lineNumbers.scrollTop = editor.scrollTop;
     });
 
     socket.on('code', (data) => {
