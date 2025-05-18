@@ -1,55 +1,63 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
 const path = require('path');
-const { createClient } = require('redis');
+const { Server } = require('socket.io');
+const redis = require('redis');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const PORT = process.env.PORT || 3000;
 
-// Redis client (Render Key-Value DB üçün)
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+// Redis bağlantısı (Render Key-Value xidmətindən URL al)
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
+
 redisClient.connect().catch(console.error);
 
-// Statik faylları göstər
 app.use(express.static('public'));
 
-// Socket.io bağlantısı
+// Əsas route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Socket.io ilə real-time bağlantı
 io.on('connection', (socket) => {
+  console.log('Yeni istifadəçi qoşuldu');
+
   socket.on('join', async (room) => {
     socket.join(room);
+    console.log(`İstifadəçi ${room} otağına qoşuldu`);
 
-    // Redis-dən həmin otağın mətnini oxu
-    let content = '';
+    // Redis-dən mövcud mətn gətir
     try {
-      content = await redisClient.get(room) || '';
+      const existingContent = await redisClient.get(room);
+      if (existingContent) {
+        socket.emit('code', existingContent);
+      }
     } catch (err) {
-      console.error('Redis error (get):', err);
+      console.error('Redis-dən oxunma xətası:', err);
     }
 
-    socket.emit('code', content);
-
     socket.on('code', async (data) => {
+      // Verilən mətni Redis-ə yadda saxla
       try {
         await redisClient.set(data.room, data.content);
-        socket.to(data.room).emit('code', data.content);
+        socket.to(data.room).emit('code', data.content); // digər istifadəçilərə göndər
       } catch (err) {
-        console.error('Redis error (set):', err);
+        console.error('Redis-ə yazma xətası:', err);
       }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('İstifadəçi ayrıldı');
     });
   });
 });
 
-// Bütün GET istəkləri üçün index.html göstər
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Serveri işə sal
+// Port (Render avtomatik təyin edir)
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server işə düşdü: http://localhost:${PORT}`);
 });
