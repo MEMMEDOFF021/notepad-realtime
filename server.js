@@ -10,7 +10,7 @@ const io = new Server(server);
 
 // Redis bağlantısı
 const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+  url: process.env.REDIS_URL || 'redis://red-d0ji0fje5dus73chnbf0:6379'
 });
 
 redisClient.on('error', (err) => console.error('Redis error:', err));
