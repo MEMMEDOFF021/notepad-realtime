@@ -8,7 +8,7 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #2e2e2e, #1a1a1a); /* Qara-boz axan fon */
+      background: linear-gradient(135deg, #2e2e2e, #1a1a1a);
       color: white;
       height: 100vh;
       display: flex;
@@ -23,48 +23,84 @@
       text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
     }
 
-    #editor {
+    .editor-wrapper {
       width: 90%;
       max-width: 1000px;
       height: 80%;
       margin-top: 20px;
+      display: flex;
       background-color: #1c1c1c;
-      color: #00ffcc;
-      font-size: 16px;
-      font-family: 'Courier New', Courier, monospace;
-      border: none;
       border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      resize: none;
-      outline: none;
+      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+      overflow: hidden;
     }
 
-    #editor:focus {
-      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+    .line-numbers {
+      background-color: #111;
+      color: #888;
+      padding: 15px 10px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      text-align: right;
+      user-select: none;
+    }
+
+    #editor {
+      width: 100%;
+      padding: 15px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      background-color: #1c1c1c;
+      color: #00ffcc;
+      border: none;
+      resize: none;
+      outline: none;
+      caret-color: #00ffcc;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
   <h1>CODE 2002</h1>
-  <textarea id="editor"></textarea>
+  <div class="editor-wrapper">
+    <div class="line-numbers" id="lineNumbers">
+      1
+    </div>
+    <textarea id="editor" autofocus></textarea>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-
     const room = window.location.pathname.substring(1);
     socket.emit('join', room);
 
     const editor = document.getElementById('editor');
+    const lineNumbers = document.getElementById('lineNumbers');
+
+    function updateLineNumbers() {
+      const lines = editor.value.split('\n').length;
+      let lineNumberHTML = '';
+      for (let i = 1; i <= lines; i++) {
+        lineNumberHTML += i + '<br>';
+      }
+      lineNumbers.innerHTML = lineNumberHTML;
+    }
 
     editor.addEventListener('input', () => {
       socket.emit('code', { room: room, content: editor.value });
+      updateLineNumbers();
     });
 
     socket.on('code', (data) => {
       editor.value = data;
+      updateLineNumbers();
     });
+
+    window.onload = () => {
+      editor.focus();
+      updateLineNumbers();
+    };
   </script>
 </body>
 </html>
