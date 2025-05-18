@@ -1,72 +1,55 @@
-<!DOCTYPE html>
-<html lang="az">
-<head>
-  <meta charset="UTF-8">
-  <title>Code2002</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #2e2e2e, #1a1a1a); /* Qara-boz fon */
-      color: white;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+const { createClient } = require('redis');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+const PORT = process.env.PORT || 3000;
+
+// Redis client (Render Key-Value DB üçün)
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+});
+redisClient.connect().catch(console.error);
+
+// Statik faylları göstər
+app.use(express.static('public'));
+
+// Socket.io bağlantısı
+io.on('connection', (socket) => {
+  socket.on('join', async (room) => {
+    socket.join(room);
+
+    // Redis-dən həmin otağın mətnini oxu
+    let content = '';
+    try {
+      content = await redisClient.get(room) || '';
+    } catch (err) {
+      console.error('Redis error (get):', err);
     }
 
-    h1 {
-      margin-top: 20px;
-      font-size: 48px;
-      letter-spacing: 4px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
-    }
+    socket.emit('code', content);
 
-    #editor {
-      width: 90%;
-      max-width: 1000px;
-      height: 80%;
-      margin-top: 20px;
-      background-color: #1c1c1c;
-      color: #00ffcc;
-      font-size: 16px;
-      font-family: 'Courier New', Courier, monospace;
-      border: none;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc; /* Açılan anda effekt */
-      resize: none;
-      outline: none;
-      caret-color: #00ffcc; /* Kursorun rəngi */
-    }
-  </style>
-</head>
-<body>
-  <h1>CODE 2002</h1>
-  <textarea id="editor" autofocus></textarea> <!-- avtomatik fokus -->
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-
-    const room = window.location.pathname.substring(1);
-    socket.emit('join', room);
-
-    const editor = document.getElementById('editor');
-
-    editor.addEventListener('input', () => {
-      socket.emit('code', { room: room, content: editor.value });
+    socket.on('code', async (data) => {
+      try {
+        await redisClient.set(data.room, data.content);
+        socket.to(data.room).emit('code', data.content);
+      } catch (err) {
+        console.error('Redis error (set):', err);
+      }
     });
+  });
+});
 
-    socket.on('code', (data) => {
-      editor.value = data;
-    });
+// Bütün GET istəkləri üçün index.html göstər
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-    // Fokuslanma və imlecin görünməsi
-    window.onload = () => {
-      editor.focus();
-    };
-  </script>
-</body>
-</html>
+// Serveri işə sal
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
