@@ -8,9 +8,17 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Public qovluğunu statik göstər
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Dinamik route-lar üçün (məsələn: /yusif, /ferhan)
+app.get('/:room', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Redis bağlantısı
 const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://red-d0ji0fje5dus73chnbf0:6379'
+  url: process.env.REDIS_URL || 'redis://default:11.10.2006ysf@red-d0ji0fje5dus73chnbf0:6379'
 });
 
 redisClient.on('error', (err) => console.error('Redis error:', err));
