@@ -36,15 +36,18 @@
     }
 
     .line-numbers {
-      background-color: #111;
-      color: #888;
-      padding: 15px 10px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 16px;
-      text-align: right;
-      user-select: none;
-      line-height: 1.2;
-      overflow: hidden;
+     background-color: #111;
+     color: #888;
+     padding: 15px 10px;
+     font-family: 'Courier New', Courier, monospace;
+     font-size: 16px;
+     text-align: right;
+     user-select: none;
+     white-space: nowrap;
+     overflow: hidden;
+     height: 100%;
+     box-sizing: border-box;
+     line-height: 1.2; /* textarea ilə eyni */
     }
 
     #editor {
