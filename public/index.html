@@ -60,12 +60,10 @@
       font-size: 16px;
       background-color: #1c1c1c;
       color: #00ffcc;
-      border: none;
-      resize: none;
       outline: none;
-      caret-color: #00ffcc;
       line-height: 1.5;
-      min-height: 24000px; /* 1000 sətr üçün (1000 * 24px) */
+      min-height: 24000px; /* 1000 sətr üçün */
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -74,7 +72,7 @@
   <div class="editor-wrapper">
     <div class="line-numbers" id="lineNumbers"></div>
     <div class="scroll-container" id="scrollContainer">
-      <textarea id="editor" autofocus></textarea>
+      <div id="editor" contenteditable="true" spellcheck="false"></div>
     </div>
   </div>
 
@@ -97,26 +95,19 @@
     }
 
     function updateLineNumbers() {
-      const lines = editor.value.split('\n').length;
+      const lines = editor.innerText.split('\n').length;
       if (lines > 1000) {
         generateInitialLines(lines);
       }
     }
 
-    function adjustEditorHeight() {
-      editor.style.height = 'auto';
-      editor.style.height = Math.max(editor.scrollHeight, 24000) + 'px';
-    }
-
     editor.addEventListener('input', () => {
-      adjustEditorHeight();
       updateLineNumbers();
-      socket.emit('code', { room: room, content: editor.value });
+      socket.emit('code', { room: room, content: editor.innerText });
     });
 
     socket.on('code', (data) => {
-      editor.value = data;
-      adjustEditorHeight();
+      editor.innerText = data;
       updateLineNumbers();
     });
 
@@ -127,7 +118,6 @@
     window.onload = () => {
       editor.focus();
       generateInitialLines(1000);
-      adjustEditorHeight();
     };
   </script>
 </body>
