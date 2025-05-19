@@ -101,6 +101,9 @@
 
   // Bütün bu eventlərdə xətt nömrələrini yenilə
   editor.addEventListener('input', sendCodeAndUpdateLines);
+  editor.addEventListener('scroll', () => {
+  lineNumbers.scrollTop = editor.scrollTop;
+  });  
   editor.addEventListener('paste', () => {
     setTimeout(sendCodeAndUpdateLines, 0); // paste sonrası mətn yenilənməsini gözlə
   });
