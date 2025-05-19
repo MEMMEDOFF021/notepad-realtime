@@ -8,15 +8,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Public qovluğunu statik göstər
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Dinamik route-lar üçün (məsələn: /yusif, /ferhan)
 app.get('/:room', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Redis bağlantısı
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL || 'redis://default:11.10.2006ysf@red-d0ji0fje5dus73chnbf0:6379'
 });
@@ -28,7 +25,6 @@ redisClient.on('error', (err) => console.error('Redis error:', err));
   console.log('Redis-ə bağlandı!');
 })();
 
-// Real-time əlaqə
 io.on('connection', (socket) => {
   console.log('Yeni istifadəçi:', socket.id);
 
@@ -50,9 +46,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('code', async (data) => {
-    if (!data.room) return;
-    await redisClient.set(data.room, data.content);
-    socket.to(data.room).emit('code', data.content);
+    const room = data.room || "default-room";
+    if (!room) return;
+
+    await redisClient.set(room, data.content);
+    socket.to(room).emit('code', data.content);
   });
 });
 
