@@ -54,7 +54,7 @@
     }
 
     #editor {
-      width: 100%;
+      flex: 1;
       padding: 15px;
       font-family: 'Courier New', Courier, monospace;
       font-size: 16px;
@@ -62,8 +62,13 @@
       color: #00ffcc;
       outline: none;
       line-height: 1.5;
-      min-height: 24000px; /* 1000 sətr üçün */
       white-space: pre-wrap;
+      min-height: 24000px; /* 1000 sətirlik boş sahə */
+    }
+
+    /* İmleç problemi yaşamamaq üçün */
+    #editor:empty::before {
+      content: "\200B"; /* zero-width space */
     }
   </style>
 </head>
@@ -86,7 +91,8 @@
     const lineNumbers = document.getElementById('lineNumbers');
     const scrollContainer = document.getElementById('scrollContainer');
 
-    function generateInitialLines(count) {
+    // Əvvəlcədən 1000 sətr nömrəsi yarat
+    function generateInitialLines(count = 1000) {
       let lines = '';
       for (let i = 1; i <= count; i++) {
         lines += i + '<br>';
