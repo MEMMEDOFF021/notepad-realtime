@@ -1,130 +1,60 @@
-<!DOCTYPE html>
-<html lang="az">
-<head>
-  <meta charset="UTF-8">
-  <title>Code2002</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #2e2e2e, #1a1a1a);
-      color: white;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const { Server } = require('socket.io');
+const redis = require('redis');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/:room', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL || 'redis://default:11.10.2006ysf@red-d0ji0fje5dus73chnbf0:6379'
+});
+
+redisClient.on('error', (err) => console.error('Redis error:', err));
+
+(async () => {
+  await redisClient.connect();
+  console.log('Redis-ə bağlandı!');
+})();
+
+io.on('connection', (socket) => {
+  console.log('Yeni istifadəçi:', socket.id);
+
+  socket.on('join', async (room) => {
+    if (!room) {
+      console.error("Xəta: Otaq ID-si yoxdur!");
+      room = "default-room";
     }
 
-    h1 {
-      margin-top: 20px;
-      font-size: 48px;
-      letter-spacing: 4px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    socket.join(room);
+    console.log(`Qoşuldu: ${socket.id} => ${room}`);
+
+    try {
+      const content = await redisClient.get(room);
+      if (content) socket.emit('code', content);
+    } catch (err) {
+      console.error('Redis xətası:', err);
     }
+  });
 
-    .editor-wrapper {
-      width: 90%;
-      max-width: 1000px;
-      height: 80%;
-      margin-top: 20px;
-      display: flex;
-      background-color: #1c1c1c;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
-      overflow: hidden;
-    }
+  socket.on('code', async (data) => {
+    const room = data.room || "default-room";
+    if (!room) return;
 
-    .line-numbers {
-      background-color: #111;
-      color: #888;
-      padding: 15px 10px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 16px;
-      text-align: right;
-      user-select: none;
-      overflow: hidden;
-    }
+    await redisClient.set(room, data.content);
+    socket.to(room).emit('code', data.content);
+  });
+});
 
-    .scroll-container {
-      overflow-y: auto;
-      width: 100%;
-      height: 100%;
-      display: flex;
-    }
-
-    #editor {
-      flex: 1;
-      padding: 15px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 16px;
-      background-color: #1c1c1c;
-      color: #00ffcc;
-      outline: none;
-      line-height: 1.2;
-      white-space: pre-wrap;
-      min-height: 24000px; /* 1000 sətirlik boş sahə */
-    }
-
-    /* İmleç problemi yaşamamaq üçün */
-    #editor:empty::before {
-      content: "\200B"; /* zero-width space */
-    }
-  </style>
-</head>
-<body>
-  <h1>CODE 2002</h1>
-  <div class="editor-wrapper">
-    <div class="line-numbers" id="lineNumbers"></div>
-    <div class="scroll-container" id="scrollContainer">
-      <div id="editor" contenteditable="true" spellcheck="false"></div>
-    </div>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const room = window.location.pathname.substring(1) || 'default-room';
-    socket.emit('join', room);
-
-    const editor = document.getElementById('editor');
-    const lineNumbers = document.getElementById('lineNumbers');
-    const scrollContainer = document.getElementById('scrollContainer');
-
-    // Əvvəlcədən 1000 sətr nömrəsi yarat
-    function generateInitialLines(count = 1000) {
-      let lines = '';
-      for (let i = 1; i <= count; i++) {
-        lines += i + '<br>';
-      }
-      lineNumbers.innerHTML = lines;
-    }
-
-    function updateLineNumbers() {
-      const lines = editor.innerText.split('\n').length;
-      if (lines > 1000) {
-        generateInitialLines(lines);
-      }
-    }
-
-    editor.addEventListener('input', () => {
-      updateLineNumbers();
-      socket.emit('code', { room: room, content: editor.innerText });
-    });
-
-    socket.on('code', (data) => {
-      editor.innerText = data;
-      updateLineNumbers();
-    });
-
-    scrollContainer.addEventListener('scroll', () => {
-      lineNumbers.scrollTop = scrollContainer.scrollTop;
-    });
-
-    window.onload = () => {
-      editor.focus();
-      generateInitialLines(1000);
-    };
-  </script>
-</body>
-</html>
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server ${PORT} portunda işləyir`);
+});
