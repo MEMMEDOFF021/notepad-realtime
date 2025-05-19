@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Code2002</title>
-  <style> 
+  <style>
     body {
       margin: 0;
       padding: 0;
@@ -33,21 +33,22 @@
       border-radius: 10px;
       box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
       overflow: hidden;
+      position: relative;
     }
 
     .line-numbers {
-     background-color: #111;
-     color: #888;
-     padding: 15px 10px;
-     font-family: 'Courier New', Courier, monospace;
-     font-size: 16px;
-     text-align: right;
-     user-select: none;
-     white-space: nowrap;
-     overflow: hidden;
-     height: 100%;
-     box-sizing: border-box;
-     line-height: 1.2; /* textarea ilə eyni */
+      background-color: #111;
+      color: #888;
+      padding: 15px 10px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      text-align: right;
+      user-select: none;
+      white-space: nowrap;
+      overflow-y: auto;
+      height: 100%;
+      box-sizing: border-box;
+      line-height: 1.2;
     }
 
     #editor {
@@ -62,63 +63,60 @@
       outline: none;
       caret-color: #00ffcc;
       line-height: 1.2;
-      overflow: auto;
+      overflow-y: auto;
     }
   </style>
 </head>
 <body>
   <h1>CODE 2002</h1>
   <div class="editor-wrapper">
-    <div class="line-numbers" id="lineNumbers">
-      1
-    </div>
+    <div class="line-numbers" id="lineNumbers">1</div>
     <textarea id="editor" autofocus></textarea>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-  const socket = io();
-  const room = window.location.pathname.substring(1);
-  socket.emit('join', room);
+    const socket = io();
+    const room = window.location.pathname.substring(1);
+    socket.emit('join', room);
 
-  const editor = document.getElementById('editor');
-  const lineNumbers = document.getElementById('lineNumbers');
+    const editor = document.getElementById('editor');
+    const lineNumbers = document.getElementById('lineNumbers');
 
-  function updateLineNumbers() {
-    const lines = editor.value.split('\n').length;
-    let lineNumberHTML = '';
-    for (let i = 1; i <= lines; i++) {
-      lineNumberHTML += i + '<br>';
+    function updateLineNumbers() {
+      const lines = editor.value.split('\n').length;
+      let lineNumberHTML = '';
+      for (let i = 1; i <= lines; i++) {
+        lineNumberHTML += i + '<br>';
+      }
+      lineNumbers.innerHTML = lineNumberHTML;
     }
-    lineNumbers.innerHTML = lineNumberHTML;
-  }
 
-  // Kod göndərilməsi və nömrələrin yenilənməsi
-  function sendCodeAndUpdateLines() {
-    socket.emit('code', { room: room, content: editor.value });
-    updateLineNumbers();
-  }
+    function sendCodeAndUpdateLines() {
+      socket.emit('code', { room: room, content: editor.value });
+      updateLineNumbers();
+    }
 
-  // Bütün bu eventlərdə xətt nömrələrini yenilə
-  editor.addEventListener('input', sendCodeAndUpdateLines);
-  editor.addEventListener('scroll', () => {
-  lineNumbers.scrollTop = editor.scrollTop;
-  });  
-  editor.addEventListener('paste', () => {
-    setTimeout(sendCodeAndUpdateLines, 0); // paste sonrası mətn yenilənməsini gözlə
-  });
-  editor.addEventListener('keyup', sendCodeAndUpdateLines);
+    editor.addEventListener('input', sendCodeAndUpdateLines);
+    editor.addEventListener('paste', () => {
+      setTimeout(sendCodeAndUpdateLines, 0);
+    });
+    editor.addEventListener('keyup', sendCodeAndUpdateLines);
 
-  socket.on('code', (data) => {
-    editor.value = data;
-    updateLineNumbers();
-  });
+    // Scroll sinxronizasiyası
+    editor.addEventListener('scroll', () => {
+      lineNumbers.scrollTop = editor.scrollTop;
+    });
 
-  window.onload = () => {
-    editor.focus();
-    updateLineNumbers();
-  };
-</script>
+    socket.on('code', (data) => {
+      editor.value = data;
+      updateLineNumbers();
+    });
 
+    window.onload = () => {
+      editor.focus();
+      updateLineNumbers();
+    };
+  </script>
 </body>
 </html>
