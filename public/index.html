@@ -77,40 +77,45 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    const room = window.location.pathname.substring(1);
-    socket.emit('join', room);
+  const socket = io();
+  const room = window.location.pathname.substring(1);
+  socket.emit('join', room);
 
-    const editor = document.getElementById('editor');
-    const lineNumbers = document.getElementById('lineNumbers');
+  const editor = document.getElementById('editor');
+  const lineNumbers = document.getElementById('lineNumbers');
 
-    function updateLineNumbers() {
-      const lines = editor.value.split('\n').length;
-      let lineNumberHTML = '';
-      for (let i = 1; i <= lines; i++) {
-        lineNumberHTML += i + '<br>';
-      }
-      lineNumbers.innerHTML = lineNumberHTML;
+  function updateLineNumbers() {
+    const lines = editor.value.split('\n').length;
+    let lineNumberHTML = '';
+    for (let i = 1; i <= lines; i++) {
+      lineNumberHTML += i + '<br>';
     }
+    lineNumbers.innerHTML = lineNumberHTML;
+  }
 
-    editor.addEventListener('input', () => {
-      socket.emit('code', { room: room, content: editor.value });
-      updateLineNumbers();
-    });
+  // Kod göndərilməsi və nömrələrin yenilənməsi
+  function sendCodeAndUpdateLines() {
+    socket.emit('code', { room: room, content: editor.value });
+    updateLineNumbers();
+  }
 
-    editor.addEventListener('scroll', () => {
-      lineNumbers.scrollTop = editor.scrollTop;
-    });
+  // Bütün bu eventlərdə xətt nömrələrini yenilə
+  editor.addEventListener('input', sendCodeAndUpdateLines);
+  editor.addEventListener('paste', () => {
+    setTimeout(sendCodeAndUpdateLines, 0); // paste sonrası mətn yenilənməsini gözlə
+  });
+  editor.addEventListener('keyup', sendCodeAndUpdateLines);
 
-    socket.on('code', (data) => {
-      editor.value = data;
-      updateLineNumbers();
-    });
+  socket.on('code', (data) => {
+    editor.value = data;
+    updateLineNumbers();
+  });
 
-    window.onload = () => {
-      editor.focus();
-      updateLineNumbers();
-    };
-  </script>
+  window.onload = () => {
+    editor.focus();
+    updateLineNumbers();
+  };
+</script>
+
 </body>
 </html>
