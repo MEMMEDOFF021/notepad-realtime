@@ -12,7 +12,7 @@
       color: white;
       height: 100vh;
       display: flex;
-      flex-direction: column; 
+      flex-direction: column;
       align-items: center;
     }
 
@@ -33,7 +33,6 @@
       border-radius: 10px;
       box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
       overflow: hidden;
-      position: relative;
     }
 
     .line-numbers {
@@ -44,14 +43,11 @@
       font-size: 16px;
       text-align: right;
       user-select: none;
-      white-space: nowrap;
-      box-sizing: border-box;
-      line-height: 1.2;
+      overflow: hidden;
     }
 
     #editor {
       width: 100%;
-      height: 100%;
       padding: 15px;
       font-family: 'Courier New', Courier, monospace;
       font-size: 16px;
@@ -61,58 +57,60 @@
       resize: none;
       outline: none;
       caret-color: #00ffcc;
-      line-height: 1.2;
-      overflow: auto; /* Scroll sadəcə burada */
+      line-height: 1.4;
+      overflow: auto;
     }
   </style>
 </head>
 <body>
   <h1>CODE 2002</h1>
   <div class="editor-wrapper">
-    <div class="line-numbers" id="lineNumbers">1</div>
+    <div class="line-numbers" id="lineNumbers">
+      <!-- 1000 nömrə başlanğıcda buraya JS ilə yazılacaq -->
+    </div>
     <textarea id="editor" autofocus></textarea>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-  const socket = io();
-  const room = window.location.pathname.substring(1) || 'default-room';
-  socket.emit('join', room);
+    const socket = io();
+    const room = window.location.pathname.substring(1) || 'default-room';
+    socket.emit('join', room);
 
-  const editor = document.getElementById('editor');
-  const lineNumbers = document.getElementById('lineNumbers');
+    const editor = document.getElementById('editor');
+    const lineNumbers = document.getElementById('lineNumbers');
 
-  function updateLineNumbers() {
-    const lineCount = Math.max(editor.value.split('\n').length, 1000); // ən azı 1000
-    let lineNumberHTML = '';
-    for (let i = 1; i <= lineCount; i++) {
-      lineNumberHTML += i + '<br>';
+    function updateLineNumbers() {
+      const lineCount = Math.max(editor.value.split('\n').length, 1000);
+      let lineNumberHTML = '';
+      for (let i = 1; i <= lineCount; i++) {
+        lineNumberHTML += i + '<br>';
+      }
+      lineNumbers.innerHTML = lineNumberHTML;
     }
-    lineNumbers.innerHTML = lineNumberHTML;
-  }
 
-  editor.addEventListener('input', () => {
-    socket.emit('code', { room: room, content: editor.value });
-    updateLineNumbers();
-  });
+    editor.addEventListener('input', () => {
+      socket.emit('code', { room: room, content: editor.value });
+      updateLineNumbers();
+    });
 
-  editor.addEventListener('paste', () => {
-    setTimeout(updateLineNumbers, 0); // yapışdırmadan sonra nömrələri yenilə
-  });
+    editor.addEventListener('paste', () => {
+      setTimeout(updateLineNumbers, 0); // Yapışdırmadan sonra nömrələ
+    });
 
-  editor.addEventListener('scroll', () => {
-    lineNumbers.scrollTop = editor.scrollTop;
-  });
+    editor.addEventListener('scroll', () => {
+      lineNumbers.scrollTop = editor.scrollTop;
+    });
 
-  socket.on('code', (data) => {
-    editor.value = data;
-    updateLineNumbers();
-  });
+    socket.on('code', (data) => {
+      editor.value = data;
+      updateLineNumbers();
+    });
 
-  window.onload = () => {
-    editor.focus();
-    updateLineNumbers();
-  };
-</script>
+    window.onload = () => {
+      editor.focus();
+      updateLineNumbers(); // İlk açılışda 1000 sətir nömrəsi göstər
+    };
+  </script>
 </body>
 </html>
