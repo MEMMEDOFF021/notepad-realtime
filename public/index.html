@@ -46,7 +46,7 @@
       user-select: none;
       white-space: nowrap;
       box-sizing: border-box;
-      line-height: 1.3;
+      line-height: 1.2;
     }
 
     #editor {
@@ -61,7 +61,7 @@
       resize: none;
       outline: none;
       caret-color: #00ffcc;
-      line-height: 1.3;
+      line-height: 1.2;
       overflow: auto; /* Scroll sadəcə burada */
     }
   </style>
@@ -75,47 +75,44 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    const room = window.location.pathname.substring(1);
-    socket.emit('join', room);
+  const socket = io();
+  const room = window.location.pathname.substring(1) || 'default-room';
+  socket.emit('join', room);
 
-    const editor = document.getElementById('editor');
-    const lineNumbers = document.getElementById('lineNumbers');
+  const editor = document.getElementById('editor');
+  const lineNumbers = document.getElementById('lineNumbers');
 
-    function updateLineNumbers() {
-      const lines = editor.value.split('\n').length;
-      let lineNumberHTML = '';
-      for (let i = 1; i <= lines; i++) {
-        lineNumberHTML += i + '<br>';
-      }
-      lineNumbers.innerHTML = lineNumberHTML;
+  function updateLineNumbers() {
+    const lineCount = Math.max(editor.value.split('\n').length, 1000); // ən azı 1000
+    let lineNumberHTML = '';
+    for (let i = 1; i <= lineCount; i++) {
+      lineNumberHTML += i + '<br>';
     }
+    lineNumbers.innerHTML = lineNumberHTML;
+  }
 
-    function sendCodeAndUpdateLines() {
-      socket.emit('code', { room: room, content: editor.value });
-      updateLineNumbers();
-    }
+  editor.addEventListener('input', () => {
+    socket.emit('code', { room: room, content: editor.value });
+    updateLineNumbers();
+  });
 
-    editor.addEventListener('input', sendCodeAndUpdateLines);
-    editor.addEventListener('paste', () => {
-      setTimeout(sendCodeAndUpdateLines, 0);
-    });
-    editor.addEventListener('keyup', sendCodeAndUpdateLines);
+  editor.addEventListener('paste', () => {
+    setTimeout(updateLineNumbers, 0); // yapışdırmadan sonra nömrələri yenilə
+  });
 
-    // Scroll sinxronizasiyası
-    editor.addEventListener('scroll', () => {
-      lineNumbers.style.transform = `translateY(-${editor.scrollTop}px)`;
-    });
+  editor.addEventListener('scroll', () => {
+    lineNumbers.scrollTop = editor.scrollTop;
+  });
 
-    socket.on('code', (data) => {
-      editor.value = data;
-      updateLineNumbers();
-    });
+  socket.on('code', (data) => {
+    editor.value = data;
+    updateLineNumbers();
+  });
 
-    window.onload = () => {
-      editor.focus();
-      updateLineNumbers();
-    };
-  </script>
+  window.onload = () => {
+    editor.focus();
+    updateLineNumbers();
+  };
+</script>
 </body>
 </html>
