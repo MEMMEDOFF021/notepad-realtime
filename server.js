@@ -29,11 +29,10 @@ io.on('connection', (socket) => {
   
   socket.on('join', async (room) => {
     if (!room) {
-      console.error(" Xəta: Otaq ID-si yoxdur!");
       room = " ";
     }
     socket.join(room);
-    console.log(` Yeni istifadəçi "code2002.info/${room}" otağına qoşuldu. `);
+    console.log(` Yeni istifadəçi " code2002.info/${room} " otağına qoşuldu. `);
     try {
       const content = await redisClient.get(room);
       if (content) socket.emit('code', content);
