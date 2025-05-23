@@ -21,7 +21,7 @@ const redisClient = redis.createClient({
 redisClient.on('error', (err) => console.error('Redis error:', err));
 
 (async () => {
-  await redisClient.connect 
+  await redisClient.connect();   // Burada () əlavə olundu
   console.log(' Məlumatlar saxlanılır və qorunur.');
 })();
 
