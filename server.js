@@ -26,8 +26,7 @@ redisClient.on('error', (err) => console.error('Redis error:', err));
 })();
 
 io.on('connection', (socket) => {
-  console.log('Yeni istifadəçi:', socket.id);
-
+  
   socket.on('join', async (room) => {
     if (!room) {
       console.error("Xəta: Otaq ID-si yoxdur!");
@@ -35,7 +34,7 @@ io.on('connection', (socket) => {
     }
 
     socket.join(room);
-    console.log(` ${socket.id} ${room} otağına qoşuldu . `);
+    console.log(` Yeni istifadəçi "code2002.info/${room}" otağına qoşuldu. `);
  
     try {
       const content = await redisClient.get(room);
