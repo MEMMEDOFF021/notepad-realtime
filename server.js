@@ -29,6 +29,7 @@ io.on('connection', (socket) => {
   
   socket.on('join', async (room) => {
     if (!room) {
+      console.error(" Xəta: Otaq ID-si yoxdur!");
       room = " ";
     }
     socket.join(room);
