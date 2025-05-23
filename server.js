@@ -35,8 +35,8 @@ io.on('connection', (socket) => {
     }
 
     socket.join(room);
-    console.log(`Qoşuldu: ${socket.id} => ${room}`);
-
+    console.log(` ${socket.id} ${room} otağına qoşuldu . `);
+ 
     try {
       const content = await redisClient.get(room);
       if (content) socket.emit('code', content);
