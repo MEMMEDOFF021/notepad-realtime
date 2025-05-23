@@ -22,7 +22,7 @@ redisClient.on('error', (err) => console.error('Redis error:', err));
 
 (async () => {
   await redisClient.connect();
-  console.log('Redis-ə bağlandı!');
+  console.log('Məlumatlar saxlanılır və qorunur.');
 })();
 
 io.on('connection', (socket) => {
@@ -55,5 +55,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server ${PORT} portunda işləyir`);
+  console.log(`Server uğurla işləyir!`);
 });
